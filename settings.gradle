@@ -1,0 +1,5 @@
+rootProject.name='lixbox-report'
+
+/** Projet importé */
+include 'lixbox-report-api'
+include 'lixbox-report-core'

@@ -1,0 +1,138 @@
+import com.bmuschko.gradle.docker.tasks.container.*
+import com.bmuschko.gradle.docker.tasks.image.*
+plugins {
+    id 'com.bmuschko.docker-remote-api' version "${docker_remote_plugins}"
+    id 'io.quarkus' version "${quarkus_gradle_plugins}"
+}
+project(":lixbox-report-core"){
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        //project
+        api project(":lixbox-report-api")
+
+        //Lixbox 
+        api(group: 'fr.lixbox.lixbox-io', name: 'lixbox-json', version: version_lixbox_io)
+        api(group: 'fr.lixbox.lixbox-io', name: 'lixbox-document', version: version_lixbox_io)
+        api(group: 'fr.lixbox.lixbox-service', name: 'lixbox-microservice-client', version: version_lixbox_service)
+        
+        //quarkus
+        api group: 'io.quarkus', name: 'quarkus-resteasy', version:quarkusVersion
+        api group: 'io.quarkus', name: 'quarkus-rest-client', version: quarkusVersion
+        api group: 'io.quarkus', name: 'quarkus-resteasy-jackson', version:quarkusVersion
+        api group: 'io.quarkus', name: 'quarkus-logging-gelf', version:quarkusVersion
+        api group: 'io.quarkus', name: 'quarkus-smallrye-health', version: quarkusVersion
+        api group: 'io.quarkus', name: 'quarkus-smallrye-metrics', version: quarkusVersion
+        api group: 'io.quarkus', name: 'quarkus-smallrye-openapi', version:quarkusVersion
+        api group: 'io.quarkus', name: 'quarkus-smallrye-opentracing', version: quarkusVersion
+        
+        //TEST
+        testImplementation group:'io.quarkus', name: 'quarkus-junit5', version:quarkusVersion
+        testImplementation group: 'io.quarkus', name: 'quarkus-rest-client', version: quarkusVersion
+        testImplementation group:'io.rest-assured', name: 'rest-assured', version:'5.3.0'
+    }
+    
+    jar{
+       duplicatesStrategy = DuplicatesStrategy.INCLUDE
+       from('dist') {
+          include '**/*.*'
+            into 'META-INF/resources'
+       }
+   
+
+       manifest {
+            attributes(
+                "Implementation-Title": project.name, 
+                "Implementation-Version": archiveVersion, 
+                "Implementation-Timestamp": new Date()
+            )
+        }
+    }
+    
+    eclipse{
+        project{
+            natures 'org.jboss.tools.ws.jaxrs.nature'
+        }
+        wtp{
+            facet {
+                facet name: 'jst.cdi', version: '2.0'
+                facet name: "jst.jaxrs", version: "2.1"
+            }   
+        }
+    }
+    
+    sonarqube {
+        properties {
+           property "sonar.projectKey", "${config.desc_project.artefact.group}.${rootProject.name}:${project.name}"
+           property "sonar.projectName", "${project.name}"
+           property "sonar.sources","src/main"
+           property "sonar.tests","src/test"
+        }
+    }
+
+    test {
+      useJUnitPlatform()
+    }
+
+    
+    //export quarkus project runner to maven
+    def quarkusRunner = file("$buildDir/libs/${project.name}-${version}.rjar")
+    def quarkusRunnerArtifact = artifacts.add('archives', quarkusRunner) {
+        type 'rjar'
+        builtBy 'quarkusBuild'
+    }    
+    task copyArtefact(type: Copy) {
+        from "$buildDir/${project.name}-${version}-runner.jar"
+        into "$buildDir/libs"
+        rename { String fileName -> "${project.name}-${version}.rjar"}
+    }
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifact quarkusRunnerArtifact
+            }
+        }
+    }
+    tasks.quarkusBuild.finalizedBy(copyArtefact);
+    tasks.jar.finalizedBy(quarkusBuild);
+
+    
+    //creation de l'image docker
+    task pullOpenjdk11Image(type: DockerPullImage, description: "Pull openjdk11 image"){
+       image='openjdk:11'
+    }    
+    task syncDependencies(type: Sync) {
+        dependsOn quarkusBuild
+        from "build/${project.name}-${project.version}-runner.jar"
+        into 'build/docker'
+    }
+    tasks.create('createDockerfile', Dockerfile) {
+        dependsOn pullOpenjdk11Image,syncDependencies
+        from('openjdk:11')
+        copyFile("${project.name}-${project.version}-runner.jar", "/app/${project.name}-${project.version}-runner.jar")
+        environmentVariable("JAVA_OPTS",'${JAVA_OPTS:--Xms=256M}')
+        runCommand("useradd lixbox --create-home --shell /bin/bash")
+        runCommand("chown -R lixbox /app")
+        user("lixbox")
+        entryPoint('java')
+        workingDir('/app')
+        defaultCommand('-jar', "${project.name}-${project.version}-runner.jar")
+        exposePort(18102)
+    }
+    task buildProjectImages(type: DockerBuildImage, group: "docker", description: "build project images") {
+        dependsOn createDockerfile
+        images.add("${config.desc_project.artefact.dockerImageKey}/${project.name}:$project.version")
+        images.add("${config.desc_project.artefact.dockerImageKey}/${project.name}:latest")
+    }
+    task pushProjectImages(type: DockerPushImage, group: "docker", description: "push project images") {
+       registryCredentials {
+            username = project.hasProperty("dockerhub_username")?project.getProperty("dockerhub_username"):''
+            password = project.hasProperty("dockerhub_password")?project.getProperty("dockerhub_password"):''
+        }
+        images.add("${config.desc_project.artefact.dockerImageKey}/${project.name}:$project.version")
+        images.add("${config.desc_project.artefact.dockerImageKey}/${project.name}:latest")
+    }
+    pushProjectImages.dependsOn buildProjectImages
+    buildAndPushDockerImages.dependsOn pushProjectImages
+}

@@ -1,0 +1,33 @@
+---
+openapi: 3.1.0
+info:
+  title: Lixbox-report
+  version: "11.1.0"
+  x-logo:
+    url: 'https://redocly.github.io/redoc/petstore-logo.png'
+    altText: Lixbox report logo
+  description: |
+    Il s'agit d'un micro-service de reporting avec génération de document.
+
+    ## Dépendances
+    ### API
+    * Peut s'enregistrer dans un annuaire de service lixbox-registry.
+
+    ## Configuration
+    ### API
+    Les variables d'environnement suivantes servent à configurer le service:
+    * **registry.uri**: URI du service d'annuaire initialisée avec **http://main.host:18100/registry/api/1.0**
+    * **quarkus.http.port**: Port exposée par le service initialisé avec **18110**
+    * **quarkus.log.handler.gelf.enabled**: Activer le log dans le logger GELF initialisé avec **false**
+    * **quarkus.log.handler.gelf.host**: Host du logger GELF initialisé avec **vsrvglog.lan**
+    * **quarkus.log.handler.gelf.port**: Port du logger GELF initialisé avec **12201**
+servers:
+  - url: http://localhost:18110
+    description: local
+paths:
+  /report/api/1.0/health:
+    get:
+      responses:
+        "200":
+          description: OK
+...

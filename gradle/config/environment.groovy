@@ -5,11 +5,11 @@ desc_project{
     version{
         majorVersion=11
         mediumVersion=1
-        minorVersion=2
+        minorVersion=0
     }
     artefact{
-        group="fr.lixbox.lixbox-param"
-        project="lixbox-param"
+        group="fr.lixbox.service"
+        project="lixbox-report"
         projectKey="${group}:${project}"
         dockerImageKey="lixboxteam"
     }
@@ -18,7 +18,7 @@ desc_project{
 pic{
     channel="lixbox"
 	git{
-	    uri="https://github.com/lixbox-team/lixbox-param.git"
+	    uri="https://github.com/lixbox-team/lixbox-report.git"
 	}    	
     jenkins{
         uri="https://ci.service.lixtec.fr/view/${channel}"

@@ -2,12 +2,40 @@ println "======================================== critical updates =============
 subprojects {
     configurations.all {
         resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        
+            if (details.requested.group.contains('org.apache.bcel') && 
+                    details.requested.name.contains('bcel') &&
+                    details.requested.version.contains('6.5')) {
+                    println "correction cpe:apache:commons_bcel < 6.6.0"
+                    details.useVersion '6.6.0'
+                    details.because 'cpe:apache:commons_bcel < 6.6.0'
+            }
+            if (details.requested.group.contains('org.apache.commons') && 
+                    details.requested.name.contains('commons-text') &&
+                    details.requested.version.contains('1.9')) {
+                    println "correction cpe:apache:commons-text < 1.9.0"
+                    details.useVersion '1.10.0'
+                    details.because 'cpe:apache:commons-text < 1.9.0'
+            }
             if (details.requested.group.contains('org.apache.httpcomponents') && 
                     details.requested.name.contains('httpclient') &&
                     details.requested.version.contains('4.5.12')) {
                     println "correction cve-org.apache.httpcomponents-httpclient-4.5.12"
                     details.useVersion '4.5.13'
                     details.because 'critical cve in 4.5.12'
+            }
+            if (details.requested.group.contains('org.apache.xmlgraphics') &&
+                    details.requested.version.contains('1.13')) {
+                    println "correction cve-org.apache.xmlgraphics-1.13"
+                    details.useVersion '1.16'
+                    details.because 'critical cve in 1.13'
+            }
+            if (details.requested.group.contains('com.google.code.gson') && 
+                    details.requested.name.contains('gson') &&
+                    details.requested.version.contains('2.8.')) {
+                    println "correction cve-com.google.code.gson:gson<2.8.9"
+                    details.useVersion '2.8.9'
+                    details.because 'cve-com.google.code.gson:gson<2.8.9'
             }
             if (details.requested.group.contains('commons-io') && 
                     details.requested.name.contains('commons-io')) {
@@ -17,8 +45,15 @@ subprojects {
             }
             if (details.requested.group.contains('com.thoughtworks.xstream') && 
                     details.requested.name.contains('xstream')) {
-                    details.useVersion '1.4.19'
-                    details.because 'critical cve in xstream<1.4.19'
+                    details.useVersion '1.4.20'
+                    details.because 'critical cve in xstream<1.4.20'
+            }
+            if (details.requested.group.contains('org.jboss.resteasy') && 
+                    details.requested.name.contains('resteasy-core') &&
+                    details.requested.version.contains('4.7.')) {
+                    println "correction cve-org.jboss.resteasy:resteasy-core<4.7.9"
+                    details.useVersion '4.7.9.Final'
+                    details.because 'cve-org.jboss.resteasy:resteasy-core<4.7.9'
             }
         }
     }
