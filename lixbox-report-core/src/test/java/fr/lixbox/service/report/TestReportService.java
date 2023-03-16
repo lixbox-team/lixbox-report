@@ -23,6 +23,7 @@
  ******************************************************************************/
 package fr.lixbox.service.report;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -32,10 +33,12 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.client.ClientBuilder;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import fr.lixbox.common.exceptions.BusinessException;
@@ -57,6 +60,29 @@ public class TestReportService implements Serializable
 
     
     // ----------- Methode(s) -----------
+    @BeforeAll
+    public static void tearOf() throws IOException
+    {
+        if (new File("./test_l.docx").exists())
+        {
+            FileUtils.forceDelete(new File("./test_l.docx"));
+        }
+        if (new File("./test_r.docx").exists())
+        {
+            FileUtils.forceDelete(new File("./test_r.docx"));
+        }
+        if (new File("./test_l.pdf").exists())
+        {
+            FileUtils.forceDelete(new File("./test_l.pdf"));
+        }
+        if (new File("./test_r.pdf").exists())
+        {
+            FileUtils.forceDelete(new File("./test_r.pdf"));
+        }
+    }
+    
+    
+    
     @Test
     void testGenerateDocx_local() throws IOException
     {        
@@ -85,6 +111,7 @@ public class TestReportService implements Serializable
             
             //verif report docx to docx
             Document report = reportService.generateDocument(Langue.FR_FR, template, fields, Constant.DOCX_MIME_TYPE);
+            FileUtils.writeByteArrayToFile(new File("./test_l.docx"), report.getContent());
             Assertions.assertEquals(29860, report.getContent().length, "La taille du rendu est incorrecte. attendue: 29860 bytes, obtenue: "+report.getContent().length+" bytes");
         }
         catch (BusinessException e)
@@ -127,6 +154,7 @@ public class TestReportService implements Serializable
             
             //verif report docx to docx
             Document report = reportService.generateDocument(Langue.FR_FR, template, fields, Constant.DOCX_MIME_TYPE);
+            FileUtils.writeByteArrayToFile(new File("./test_r.docx"), report.getContent());
             Assertions.assertEquals(29860, report.getContent().length, "La taille du rendu est incorrecte. attendue: 29860 bytes, obtenue: "+report.getContent().length+" bytes");
         }
         catch (Exception e)
@@ -165,6 +193,7 @@ public class TestReportService implements Serializable
             
             //verif report docx to docx
             Document report = reportService.generateDocument(Langue.FR_FR, template, fields, Constant.PDF_MIME_TYPE);
+            FileUtils.writeByteArrayToFile(new File("./test_l.pdf"), report.getContent());
             Assertions.assertEquals(65608, report.getContent().length, "La taille du rendu est incorrecte. attendue: 65608 bytes, obtenue: "+report.getContent().length+" bytes");
         }
         catch (BusinessException e)
@@ -207,6 +236,7 @@ public class TestReportService implements Serializable
             
             //verif report docx to docx
             Document report = reportService.generateDocument(Langue.FR_FR, template, fields, Constant.PDF_MIME_TYPE);
+            FileUtils.writeByteArrayToFile(new File("./test_r.pdf"), report.getContent());
             Assertions.assertEquals(65608, report.getContent().length, "La taille du rendu est incorrecte. attendue: 65608 bytes, obtenue: "+report.getContent().length+" bytes");
         }
         catch (Exception e)
