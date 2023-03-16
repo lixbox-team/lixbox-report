@@ -139,7 +139,7 @@ public class ReportServiceBean implements ReportService, Serializable
             
             //verif report docx to pdf
             report = generateDocument(Langue.FR_FR, template, fields, Constant.PDF_MIME_TYPE);
-            if (65608!=report.getContent().length)
+            if (report.getContent().length>0)
             {
                 up=false;
                 String msg = "La taille du report en pdf est incorrecte. attendue: 65608 bytes, obtenue: "+report.getContent().length+" bytes";
