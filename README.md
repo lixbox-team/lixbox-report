@@ -107,6 +107,7 @@ Les paramètres suivants servent à configurer le service:
 * **quarkus.log.handler.gelf.enabled**: Activer le log dans le logger GELF initialisé avec **false**
 * **quarkus.log.handler.gelf.host**: Host du logger GELF initialisé avec **vsrvglog.lan**
 * **quarkus.log.handler.gelf.port**: Port du logger GELF initialisé avec **12201**
+* **report.debug.infile.mode**: Enregistrement du template et du resultat dans un fichier sur disque initialisé avec **false**
 
 Ils sont aussi accessibles avec des variables d'environnement
 
@@ -119,6 +120,7 @@ Ils sont aussi accessibles avec des variables d'environnement
 * **QUARKUS_LOG_HANDLER_GELF_ENABLED**: Activer le log dans le logger GELF initialisé avec **false**
 * **QUARKUS_LOG_HANDLER_GELF_HOST**: Host du logger GELF initialisé avec **vsrvglog.lan**
 * **QUARKUS_LOG_HANDLER_GELF_PORT**: Port du logger GELF initialisé avec **12201**
+* **REPORT_DEBUG_INFILE_MODE**: Enregistrement du template et du resultat dans un fichier sur disque initialisé avec **false**
 
 
 ## Utilisateur nécessaire

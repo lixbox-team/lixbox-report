@@ -25,6 +25,7 @@ package fr.lixbox.service.report.service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -37,7 +38,9 @@ import javax.annotation.security.PermitAll;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.eclipse.microprofile.health.HealthCheckResponseBuilder;
 import org.eclipse.microprofile.metrics.MetricUnits;
@@ -57,6 +60,7 @@ import fr.lixbox.service.report.model.Constant;
 import fr.lixbox.service.report.model.Document;
 import fr.lixbox.service.report.model.DocumentField;
 import fr.lixbox.service.report.model.Langue;
+import io.quarkus.logging.Log;
 
 /**
  * Cette classe est l'implémentation de l'API Report
@@ -70,6 +74,8 @@ public class ReportServiceBean implements ReportService, Serializable
     private static final long serialVersionUID = 202203151146L;
     private static final String MSG_ERROR_EXCEPUTI_02 = "MSG.ERROR.EXCEPUTI_02";
     @Inject @LocalRegistryConfig RegistryService registryService;
+    
+    @ConfigProperty(name = "report.debug.infile.mode") boolean debugInfile;
 
 
 
@@ -120,7 +126,7 @@ public class ReportServiceBean implements ReportService, Serializable
             fields.add(new DocumentField("port_call", "Arrival : FRMRS"));
             fields.add(new DocumentField("flag_state", "FR"));
             fields.add(new DocumentField("date_eta", "12/12/2018 12:30"));
-            fields.add(new DocumentField("date_etd", "12/12/2018 12:30"));            
+            fields.add(new DocumentField("date_etd", "12/12/2018 12:30"));
             
             
             //verif report docx to docx
@@ -202,25 +208,30 @@ public class ReportServiceBean implements ReportService, Serializable
         {
             throw new BusinessException(LixboxResources.getString(
                     MSG_ERROR_EXCEPUTI_02, 
-                    new String[] { ReportService.SERVICE_CODE, "fields" }));   
+                    new String[] { ReportService.SERVICE_CODE, "fields" }));
         }
         
         Document report=null;
         byte[] content = new byte[0];
                 
         try
-        {   
+        {  
+            if (debugInfile)
+            {
+                FileUtils.writeByteArrayToFile(new File(System.getProperty("user.dir")+"/template.docx"), template.getContent());
+                Log.info("USER.DIR: "+System.getProperty("user.dir"));
+            }
             switch (template.getMimeType())
             {
                 case Constant.DOCX_MIME_TYPE:
-                    content = generateDocxReport(langue, fields, template, typeDocSortie);                            
+                    content = generateDocxReport(langue, fields, template, typeDocSortie);
                     break;
                 default:
                     throw new ProcessusException(LixboxReportResources.getString("template.format.unsupported", langue));
             }
             report = new Document();
             report.setContent(content);
-            report.setMimeType(typeDocSortie);
+            report.setMimeType(typeDocSortie); 
         }    
         catch(Exception e) 
         {
@@ -242,18 +253,28 @@ public class ReportServiceBean implements ReportService, Serializable
         )
         {   
             ReportUtil reportUtil = new ReportUtil(in, Calendar.getInstance().getTimeInMillis()+"");
-            
             Map<String, Object> hFields = new HashMap<>();
             for (DocumentField field : fields)
             {
-                hFields.put(field.getKey(), field.getValue());
+                if (field!=null) 
+                {
+                    hFields.put(field.getKey(), field.getValue());
+                }
             }
             switch(typeDocSortie) {
                 case Constant.DOCX_MIME_TYPE:
                     reportUtil.generateReportDocxToDocx(out, hFields, reportUtil.getFieldsMetadata());
+                    if (debugInfile)
+                    {
+                        FileUtils.writeByteArrayToFile(new File(System.getProperty("user.dir")+"/result.docx"), content);
+                    }
                     break;
                 case Constant.PDF_MIME_TYPE:
                     reportUtil.generateReportDocxToPdf(out, hFields, reportUtil.getFieldsMetadata());
+                    if (debugInfile)
+                    {
+                        FileUtils.writeByteArrayToFile(new File(System.getProperty("user.dir")+"/result.pdf"), content);
+                    }
                     break;
                 default:
                     throw new ProcessusException(LixboxReportResources.getString("out.format.unsupported", langue));
