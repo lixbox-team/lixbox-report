@@ -21,6 +21,7 @@ info:
     * **quarkus.log.handler.gelf.enabled**: Activer le log dans le logger GELF initialisé avec **false**
     * **quarkus.log.handler.gelf.host**: Host du logger GELF initialisé avec **vsrvglog.lan**
     * **quarkus.log.handler.gelf.port**: Port du logger GELF initialisé avec **12201**
+    * **report.debug.infile.mode**: Enregistrement du template et du resultat dans un fichier sur disque initialisé avec **false**
 servers:
   - url: http://localhost:18110
     description: local
